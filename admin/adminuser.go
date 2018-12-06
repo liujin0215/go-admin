@@ -1,6 +1,6 @@
 package admin
 
 type AdminUser struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID   uint   `model:"id" json:"id"`
+	Name string `model:"name" json:"name"`
 }
