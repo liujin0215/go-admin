@@ -1,11 +1,8 @@
 package sql
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
-	"reflect"
-	"strings"
 )
 
 type (
@@ -37,6 +34,7 @@ func (db *DB) Insert(tbName string, model MapModel) (id int64, err error) {
 }
 
 func (db *DB) Update(tbName string, model MapModel, where interface{}, wArgs ...interface{}) (affected int64, err error) {
+	model.ClearPK()
 	sQuery, args := prepareMapQuery(model, ",")
 	if len(args) == 0 {
 		return 0, ErrQueryEmpty
@@ -45,10 +43,28 @@ func (db *DB) Update(tbName string, model MapModel, where interface{}, wArgs ...
 	if len(wArgs) == 0 {
 		return 0, ErrConditionEmpty
 	}
-	args = append(args, wArgs)
+	args = append(args, wArgs...)
 	var result sql.Result
 	query := fmt.Sprintf("update %s set %s where %s;", tbName, sQuery, wQuery)
+	fmt.Println(query)
 	result, err = db.DB.Exec(query, args...)
+	if err != nil {
+		return
+	}
+	return result.RowsAffected()
+}
+
+func (db *DB) Delete(tbName string, where interface{}, wArgs ...interface{}) (affected int64, err error) {
+	wQuery, wArgs := prepareWhere(where, wArgs)
+	if len(wArgs) == 0 {
+		return 0, ErrConditionEmpty
+	}
+	var result sql.Result
+	query := fmt.Sprintf("delete from %s where %s;", tbName, wQuery)
+	result, err = db.DB.Exec(query, wArgs...)
+	if err != nil {
+		return
+	}
 	return result.RowsAffected()
 }
 
@@ -66,84 +82,4 @@ func (db *DB) Tb(tbName string) *Query {
 
 func (db *DB) Raw(query string) *Query {
 	return &Query{query: query, db: db.DB}
-}
-
-func prepareSelect(itf interface{}) string {
-	t := reflect.TypeOf(itf)
-	v := reflect.ValueOf(itf)
-
-	if t.Kind() == reflect.String {
-		return itf.(string)
-	}
-
-	if t.Kind() == reflect.Ptr {
-		v = v.Elem()
-		t = v.Type()
-	}
-
-	if t.Kind() != reflect.Struct {
-		return ""
-	}
-
-	var buff bytes.Buffer
-	for i := 0; i < t.NumField(); i++ {
-		key := getFieldName(t.Field(i))
-		if len(key) == 0 {
-			continue
-		}
-		buff.WriteString(key)
-		if i < t.NumField()-1 {
-			buff.WriteString(",")
-		}
-	}
-	return buff.String()
-}
-
-func getFieldName(field reflect.StructField) string {
-	tag := field.Tag.Get(tagName)
-	if len(tag) == 0 {
-		return ""
-	}
-	options := strings.Split(tag, ",")
-	return strings.TrimSpace(options[0])
-}
-
-func prepareWhere(where interface{}, args []interface{}) (string, []interface{}) {
-	if query, ok := where.(string); ok {
-		return query, args
-	}
-
-	if model, ok := where.(MapModel); ok {
-		return prepareMapQuery(model, " and ")
-	}
-
-	return "", nil
-}
-
-func parseMap(model map[string]interface{}) (kList []string, vList []interface{}) {
-	for key, value := range model {
-		kList = append(kList, key)
-		vList = append(vList, value)
-	}
-	return
-}
-
-func prepareMapQuery(model map[string]interface{}, sep string) (query string, args []interface{}) {
-	var kList []string
-	kList, args = parseMap(model)
-	query = joinKlist(kList, sep)
-	return
-}
-
-func joinKlist(kList []string, sep string) string {
-	l := len(kList)
-	var buff bytes.Buffer
-	for n, key := range kList {
-		buff.WriteString(key)
-		buff.WriteString("=?")
-		if n < l-1 {
-			buff.WriteString(sep)
-		}
-	}
-	return buff.String()
 }

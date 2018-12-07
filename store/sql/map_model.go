@@ -23,3 +23,7 @@ func (mm MapModel) PK() uint {
 
 	return uint(floatID)
 }
+
+func (mm MapModel) ClearPK() {
+	delete(mm, "id")
+}

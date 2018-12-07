@@ -1,4 +1,4 @@
-package admin
+package model
 
 type Role struct {
 	ID   uint   `json:"id"`

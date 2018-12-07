@@ -1,4 +1,4 @@
-package admin
+package model
 
 type AdminUser struct {
 	ID   uint   `model:"id" json:"id"`

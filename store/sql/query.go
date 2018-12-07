@@ -60,7 +60,6 @@ func (q *Query) prepare() {
 	}
 
 	q.query += ";"
-	fmt.Println(q.query)
 }
 
 func (q *Query) Tb(tbName string) *Query {

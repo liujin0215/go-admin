@@ -1,4 +1,4 @@
-package admin
+package model
 
 type Permission struct {
 	ID    uint   `json:"id"`
