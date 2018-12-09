@@ -1,0 +1,7 @@
+{
+    "Addr": "localhost:8080",
+    "AdminDB": {
+        "Type": "mysql",
+        "Addr": "root:Liujin@tcp(localhost:3306)/data?charset=utf8mb4&parseTime=true"
+    }
+}
