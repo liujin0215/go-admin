@@ -63,7 +63,7 @@ func TestRetrieveMenu(t *testing.T) {
 }
 
 func TestUpdateMenu(t *testing.T) {
-	data := sql.MapModel{"id": 1, "name": "test-name2"}
+	data := sql.MapModel{"id": 1, "name": "菜单配置"}
 	test(t, UpdateMenu, data)
 }
 

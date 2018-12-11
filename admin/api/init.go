@@ -1,13 +1,15 @@
 package api
 
 import (
+	"go-admin/headers/controller"
+
 	"github.com/kataras/iris"
 )
 
 //RegisterRoute 注册路由
 func RegisterRoute(app *iris.Application) {
-	app.HandleMany("POST OPTIONS", "/menu/create", CreateMenu)
-	app.HandleMany("POST OPTIONS", "/menu/retrieve", RetrieveMenu)
-	app.HandleMany("POST OPTIONS", "/menu/update", UpdateMenu)
-	app.HandleMany("POST OPTIONS", "/menu/delete", DeleteMenu)
+	app.HandleMany("POST OPTIONS", "/api/menu/create", controller.AccessHeaders, CreateMenu)
+	app.HandleMany("POST OPTIONS", "/api/menu/retrieve", controller.AccessHeaders, RetrieveMenu)
+	app.HandleMany("POST OPTIONS", "/api/menu/update", controller.AccessHeaders, UpdateMenu)
+	app.HandleMany("POST OPTIONS", "/api/menu/delete", controller.AccessHeaders, DeleteMenu)
 }

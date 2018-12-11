@@ -1,8 +1,6 @@
 package response
 
 import (
-	"encoding/json"
-
 	"github.com/kataras/iris"
 )
 
@@ -15,7 +13,7 @@ type Response struct {
 
 //WriteResp 通用回复方法
 func WriteResp(ctx iris.Context, resp *Response) {
-	json.NewEncoder(ctx.ResponseWriter()).Encode(resp)
+	ctx.JSON(resp)
 }
 
 func WriteSuccessResp(ctx iris.Context, data interface{}) {
