@@ -37,34 +37,35 @@ func unmarshalValue(v reflect.Value, columns []string) (dest []interface{}, err 
 }
 
 func prepareSelect(itf interface{}) string {
-	t := reflect.TypeOf(itf)
-	v := reflect.ValueOf(itf)
-
-	if t.Kind() == reflect.String {
+	switch itf.(type) {
+	case string:
 		return itf.(string)
+	default:
+		fields := getAllFields(itf)
+		return strings.Join(fields, ",")
 	}
+	return ""
+}
 
-	if t.Kind() == reflect.Ptr {
-		v = v.Elem()
-		t = v.Type()
-	}
-
-	if t.Kind() != reflect.Struct {
-		return ""
-	}
-
-	var buff bytes.Buffer
-	for i := 0; i < t.NumField(); i++ {
-		key := getFieldName(t.Field(i))
-		if len(key) == 0 {
-			continue
+func prepareWhere(where interface{}, args []interface{}) (string, []interface{}) {
+	switch where.(type) {
+	case string:
+		return where.(string), args
+	case MapModel:
+		if len(args) == 0 {
+			return "", args
 		}
-		buff.WriteString(key)
-		if i < t.NumField()-1 {
-			buff.WriteString(",")
+		model, ok := args[1].(Model)
+		if !ok {
+			return "", []interface{}{}
 		}
+		keyList, valueList := where.(MapModel).Parse(model)
+		return joinKlist(keyList, " and "), valueList
+	default:
+		keyList, valueList := parseStruct(where)
+		return joinKlist(keyList, " and "), valueList
 	}
-	return buff.String()
+	return "", []interface{}{}
 }
 
 func getAllFields(itf interface{}) (fields []string) {
@@ -99,26 +100,6 @@ func getFieldName(field reflect.StructField) string {
 	return strings.TrimSpace(options[0])
 }
 
-func prepareWhere(where interface{}, args []interface{}) (string, []interface{}) {
-	if query, ok := where.(string); ok {
-		return query, args
-	}
-
-	if model, ok := where.(MapModel); ok {
-		return prepareMapQuery(model, " and ")
-	}
-
-	return "", nil
-}
-
-func parseMap(mapModel map[string]interface{}) (kList []string, vList []interface{}) {
-	for key, value := range mapModel {
-		kList = append(kList, key)
-		vList = append(vList, value)
-	}
-	return
-}
-
 func instrList(x string, strList []string) bool {
 	for _, i := range strList {
 		if i == x {
@@ -128,9 +109,81 @@ func instrList(x string, strList []string) bool {
 	return false
 }
 
-func prepareMapQuery(model map[string]interface{}, sep string) (query string, args []interface{}) {
+func parseStruct(itf interface{}) (keyList []string, valueList []interface{}) {
+	t := reflect.TypeOf(itf)
+	v := reflect.ValueOf(itf)
+
+	if t.Kind() == reflect.Ptr {
+		v = v.Elem()
+		t = v.Type()
+	}
+
+	if t.Kind() != reflect.Struct {
+		return
+	}
+
+	for i := 0; i < t.NumField(); i++ {
+		key := getFieldName(t.Field(i))
+		if len(key) == 0 {
+			continue
+		}
+		value := v.Field(i)
+		if !value.IsValid() {
+			continue
+		}
+		var ret bool
+		switch value.Kind() {
+		case reflect.String:
+			if len(value.String()) > 0 {
+				ret = true
+			}
+			break
+		case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int8:
+			if value.Int() > 0 {
+				ret = true
+			}
+			break
+		case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8:
+			if value.Uint() > 0 {
+				ret = true
+			}
+			break
+		default:
+			ret = true
+		}
+		if ret {
+			keyList = append(keyList, key)
+			valueList = append(valueList, value.Interface())
+		}
+	}
+	return
+}
+
+func prepareStructQuery(model interface{}, sep string) (query string, args []interface{}) {
+	t := reflect.TypeOf(model)
+	v := reflect.ValueOf(model)
+
+	if t.Kind() == reflect.Ptr {
+		v = v.Elem()
+		t = v.Type()
+	}
+
+	if t.Kind() != reflect.Struct {
+		return
+	}
+
 	var kList []string
-	kList, args = parseMap(model)
+	for i := 0; i < t.NumField(); i++ {
+		key := getFieldName(t.Field(i))
+		if len(key) == 0 {
+			continue
+		}
+		value := v.Field(i)
+		if value.IsValid() {
+			kList = append(kList, key)
+			args = append(args, value.Interface())
+		}
+	}
 	query = joinKlist(kList, sep)
 	return
 }
@@ -140,7 +193,7 @@ func joinKlist(kList []string, sep string) string {
 	var buff bytes.Buffer
 	for n, key := range kList {
 		buff.WriteString(key)
-		buff.WriteString(" = ?")
+		buff.WriteString("=?")
 		if n < l-1 {
 			buff.WriteString(sep)
 		}

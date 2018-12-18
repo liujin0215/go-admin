@@ -22,6 +22,9 @@ type (
 	}
 )
 
+func (q *Query) Stmt() string        { return q.query }
+func (q *Query) Args() []interface{} { return q.args }
+
 func (q *Query) Err() error {
 	return q.err
 }
@@ -60,6 +63,8 @@ func (q *Query) prepare() {
 	}
 
 	q.query += ";"
+	fmt.Println(q.query)
+	fmt.Println(q.args)
 }
 
 func (q *Query) Tb(tbName string) *Query {

@@ -12,3 +12,6 @@ type Menu struct {
 	Route string `model:"route" json:"route"`
 	Fid   uint   `model:"fid" json:"fid"`
 }
+
+func (m *Menu) TbName() string { return TbMenu }
+func (m *Menu) PK() uint       { return m.ID }

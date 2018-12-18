@@ -2,7 +2,6 @@ package sql
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type (
@@ -22,50 +21,9 @@ func NewDB(c *DBConfig) (db *DB, err error) {
 	return
 }
 
-func (db *DB) Insert(tbName string, model MapModel) (id int64, err error) {
-	var result sql.Result
-	query, args := prepareMapQuery(model, ",")
-	if len(args) == 0 {
-		return 0, ErrQueryEmpty
-	}
-	query = fmt.Sprintf("insert into %s set %s;", tbName, query)
-	result, err = db.DB.Exec(query, args...)
-	return result.LastInsertId()
-}
-
-func (db *DB) Update(tbName string, model MapModel, where interface{}, wArgs ...interface{}) (affected int64, err error) {
-	model.ClearPK()
-	sQuery, args := prepareMapQuery(model, ",")
-	if len(args) == 0 {
-		return 0, ErrQueryEmpty
-	}
-	wQuery, wArgs := prepareWhere(where, wArgs)
-	if len(wArgs) == 0 {
-		return 0, ErrConditionEmpty
-	}
-	args = append(args, wArgs...)
-	var result sql.Result
-	query := fmt.Sprintf("update %s set %s where %s;", tbName, sQuery, wQuery)
-	fmt.Println(query)
-	result, err = db.DB.Exec(query, args...)
-	if err != nil {
-		return
-	}
-	return result.RowsAffected()
-}
-
-func (db *DB) Delete(tbName string, where interface{}, wArgs ...interface{}) (affected int64, err error) {
-	wQuery, wArgs := prepareWhere(where, wArgs)
-	if len(wArgs) == 0 {
-		return 0, ErrConditionEmpty
-	}
-	var result sql.Result
-	query := fmt.Sprintf("delete from %s where %s;", tbName, wQuery)
-	result, err = db.DB.Exec(query, wArgs...)
-	if err != nil {
-		return
-	}
-	return result.RowsAffected()
+func (db *DB) Exec(method int, es ExecStruct) (sql.Result, error) {
+	stmt := es.Prepare(method)
+	return db.DB.Exec(stmt.Stmt(), stmt.Args()...)
 }
 
 func (db *DB) Select(itf interface{}) *Query {

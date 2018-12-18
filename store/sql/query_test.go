@@ -20,7 +20,7 @@ func TestFindOne(t *testing.T) {
 
 	s := &TestStruct{ID: 1}
 
-	err = db.Tb("adminuser").Select(s).Where("id = ?", 1).FindOne(s).Err()
+	err = db.Tb("menu").Select(s).Where(s).FindOne(s).Err()
 	if err != nil {
 		t.Fatal(err)
 	}
