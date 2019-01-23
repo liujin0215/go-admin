@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"go-admin/admin/api"
+	"go-admin/admin"
 	"go-admin/example/baseserver/config"
+	hcontroller "go-admin/headers/controller"
 
 	"github.com/kataras/iris"
 )
@@ -17,7 +18,9 @@ func main() {
 	}
 
 	app := iris.Default()
-	api.RegisterRoute(app)
+	app.Use(hcontroller.AccessHeaders)
+
+	admin.RegisterRoute(app)
 
 	app.Run(iris.Addr(config.Conf.Addr))
 }

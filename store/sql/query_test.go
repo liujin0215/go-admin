@@ -40,12 +40,12 @@ func TestFind(t *testing.T) {
 	}
 
 	s := &TestStruct{ID: 1}
-	var records []*TestStruct
+	//var records time.Time
 
-	err = db.Tb("adminuser").Select(s).Where("id = ?", 1).Find(&records).Err()
+	err = db.Tb("adminuser").Select("created").Where("id = ?", 1).FindOne(s).Err()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fmt.Println(records)
+	fmt.Println(s)
 }

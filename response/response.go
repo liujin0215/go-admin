@@ -14,7 +14,6 @@ type Response struct {
 //WriteResp 通用回复
 func WriteResp(ctx iris.Context, resp *Response) {
 	ctx.JSON(resp)
-	//ctx.NotFound()
 }
 
 //WriteSuccessResp 成功回复
@@ -24,5 +23,8 @@ func WriteSuccessResp(ctx iris.Context, data interface{}) {
 
 //WriteFailResp 失败回复
 func WriteFailResp(ctx iris.Context, errNo int) {
-	WriteResp(ctx, &Response{Err: errMap[errNo]})
+	WriteResp(ctx, &Response{
+		Code: errNo,
+		Err:  errMap[errNo],
+	})
 }

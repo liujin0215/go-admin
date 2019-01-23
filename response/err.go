@@ -1,14 +1,16 @@
 package response
 
+// 错误的枚举
 const (
-	ErrParseBody = iota + 1
-	ErrCreate
-	ErrRetrieve
-	ErrEmptyPK
+	ErrCreate = iota + 1
 	ErrUpdate
 	ErrDelete
+	ErrRetrieve
+	ErrParseBody
+	ErrEmptyPK
 )
 
+// 错误的返回内容map
 var errMap = map[int]string{
 	ErrParseBody: "解析body失败",
 	ErrCreate:    "创建失败",

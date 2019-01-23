@@ -13,5 +13,8 @@ type Menu struct {
 	Fid   uint   `model:"fid" json:"fid"`
 }
 
+// TbName 菜单的表名称
 func (m *Menu) TbName() string { return TbMenu }
-func (m *Menu) PK() uint       { return m.ID }
+
+// PK 菜单的主键
+func (m *Menu) PK() uint { return m.ID }

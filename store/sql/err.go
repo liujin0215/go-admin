@@ -2,6 +2,7 @@ package sql
 
 import "errors"
 
+// 常见错误错误
 var (
 	ErrPKEmpty        = errors.New("pk is empty")
 	ErrQueryEmpty     = errors.New("query is empty")

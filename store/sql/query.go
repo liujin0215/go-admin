@@ -1,3 +1,4 @@
+// Package sql Query类
 package sql
 
 import (
@@ -8,6 +9,7 @@ import (
 )
 
 type (
+	// Query Query类的结构
 	Query struct {
 		db          *sql.DB
 		tb          string
@@ -22,25 +24,30 @@ type (
 	}
 )
 
-func (q *Query) Stmt() string        { return q.query }
+// Stmt 返回数据库查询的语句，实现StmtStruct
+func (q *Query) Stmt() string { return q.query }
+
+// Args 返回数据库查询的参数，实现StmtStruct
 func (q *Query) Args() []interface{} { return q.args }
 
+// Err 返回错误
 func (q *Query) Err() error {
 	return q.err
 }
 
-func (q *Query) prepare() {
+// Prepare 准备数据库查询的语句，同时实现ExecStruct
+func (q *Query) Prepare() *Query {
 	if q.err != nil {
-		return
+		return q
 	}
 
 	if len(q.query) > 0 {
-		return
+		return q
 	}
 
 	if len(q.tb) == 0 || len(q.selectQuery) == 0 {
 		q.err = ErrQueryEmpty
-		return
+		return q
 	}
 
 	q.query = fmt.Sprintf("select %s from %s", q.selectQuery, q.tb)
@@ -63,10 +70,10 @@ func (q *Query) prepare() {
 	}
 
 	q.query += ";"
-	fmt.Println(q.query)
-	fmt.Println(q.args)
+	return q
 }
 
+// Tb 设置表名称
 func (q *Query) Tb(tbName string) *Query {
 	if q.err != nil {
 		return q
@@ -75,6 +82,7 @@ func (q *Query) Tb(tbName string) *Query {
 	return q
 }
 
+// Select 设置select语句
 func (q *Query) Select(itf interface{}) *Query {
 	if q.err != nil {
 		return q
@@ -86,6 +94,7 @@ func (q *Query) Select(itf interface{}) *Query {
 	return q
 }
 
+// Where 设置where语句
 func (q *Query) Where(where interface{}, args ...interface{}) *Query {
 	if q.err != nil {
 		return q
@@ -94,6 +103,7 @@ func (q *Query) Where(where interface{}, args ...interface{}) *Query {
 	return q
 }
 
+// OrderBy 设置order by语句
 func (q *Query) OrderBy(args ...string) *Query {
 	if q.err != nil {
 		return q
@@ -102,6 +112,7 @@ func (q *Query) OrderBy(args ...string) *Query {
 	return q
 }
 
+// Limit 设置limit语句
 func (q *Query) Limit(n uint) *Query {
 	if q.err != nil {
 		return q
@@ -110,6 +121,7 @@ func (q *Query) Limit(n uint) *Query {
 	return q
 }
 
+// Offset 设置offset 语句
 func (q *Query) Offset(n uint) *Query {
 	if q.err != nil {
 		return q
@@ -118,8 +130,9 @@ func (q *Query) Offset(n uint) *Query {
 	return q
 }
 
+// FindOne 查询单条记录
 func (q *Query) FindOne(itf interface{}) *Query {
-	q.prepare()
+	q.Prepare()
 	if q.err != nil {
 		return q
 	}
@@ -158,8 +171,9 @@ func (q *Query) FindOne(itf interface{}) *Query {
 	return q
 }
 
+// Find 查询多条记录
 func (q *Query) Find(itf interface{}) *Query {
-	q.prepare()
+	q.Prepare()
 	if q.err != nil {
 		return q
 	}
@@ -171,12 +185,10 @@ func (q *Query) Find(itf interface{}) *Query {
 	}
 
 	t := sliceValue.Type().Elem()
-	if t.Kind() != reflect.Ptr {
-		q.err = ErrNotPtr
-		return q
+	k := t.Kind()
+	if k == reflect.Ptr {
+		t = t.Elem()
 	}
-
-	t = t.Elem()
 
 	rows, err := q.db.Query(q.query, q.args...)
 	if err != nil {
@@ -209,8 +221,11 @@ func (q *Query) Find(itf interface{}) *Query {
 			q.err = err
 			return q
 		}
+		if k != reflect.Ptr {
+			v = v.Elem()
+		}
 
-		sliceValue.Set(reflect.Append(sliceValue, v.Elem().Addr()))
+		sliceValue.Set(reflect.Append(sliceValue, v))
 	}
 
 	return q
